@@ -38,7 +38,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:210/545;border-radius:1
  </div>
  <p class="hint" id="hint"><strong>Grab near the ball.</strong> Pull down, then release.</p>
  <details><summary>How to play</summary><p>Grab the ball or its halo and pull it back from the fixed tether point. Release to fly over the blocks and land on a target. The landing spot is the mirror of the release spot across the tether: pull farther down to land farther up; pull right to land left. Use the original board grid to judge the distance. The ball always returns to the same resting spot. Tapping elsewhere does not move it. A tap or an interrupted touch cancels.</p><p>Only the landing cell is hit. Blocks underneath the flight path are passed over. Land on any block to clear its connected color group. Bigger groups earn more. A flashing block turns the remaining board into its displayed color when hit. A numbered bomb clears a 5 × 5 area when hit. Both special types count down from 9; if time runs out, they become ordinary blocks. New blocks fall into the stacks. If a stack crosses the dashed top line, the game ends.</p><p>Classic adds blocks on a timer. Relaxed adds them after every three shots. Your best score is saved separately for each mode on this device when browser storage is available. Switching away automatically pauses.</p><p>Keyboard: ← → aim, ↑ ↓ change power, Space shoots, P pauses. Sound is optional. In Safari, use Share → Add to Home Screen for an app-like shortcut.</p></details>
- <footer>Inspired by Ferry Halim's Bauns. Independent recreation. · v3</footer>
+ <footer>Inspired by Ferry Halim's Bauns. Independent recreation. · v4</footer>
 </main>
 <script>
 'use strict';
@@ -46,15 +46,18 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:210/545;border-radius:1
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const $=id=>document.getElementById(id);
 // The original board is 210 × 545. Keep its coordinate proportions unchanged.
-const SCALE=360/210,W=360,H=545*SCALE,LEFT=5.75*SCALE,CELL=24.5*SCALE,COLS=8,BASE=270.75*SCALE,TOP=25*SCALE,R=11;
-// Original tether, resting position, drag bounds, and 16 two-frame flight steps at 25 fps.
+const SCALE=360/210,W=360,H=545*SCALE,LEFT=5.75*SCALE,CELL=24.5*SCALE,COLS=8,BASE=270.75*SCALE,TOP=25*SCALE,R=10.05*SCALE;
+// Original tether, resting position, drag bounds, and 16 movement ticks at 25 fps.
 const ANCHOR={x:105*SCALE,y:280*SCALE},REST={x:106*SCALE,y:300*SCALE};
 const DRAG_BOUNDS={left:20*SCALE,right:190*SCALE,top:298*SCALE,bottom:523*SCALE};
-const FLIGHT_SECONDS=32/25;
+const FPS=25,FLIGHT_SECONDS=16/FPS,DROP_TICKS=12,RETURN_SECONDS=10/FPS;
+// Scale keys measured from the original flight and return movie-clip timelines.
+const FLIGHT_SCALE=[1,1.171585083,1.31678772,1.435577393,1.52796936,1.593963623,1.633560181,1.646759033,1.636657715,1.606323242,1.555801392,1.485092163,1.394119263,1.282958984,1.151565552,1,.5];
+const RETURN_SCALE=[.099990845,.168746948,.375,.71875,1.199996948,1.050003052,.899993896,.955535889,.988891602,1,1];
 const GRID={horizontal:[330.35,405.35,479.35],verticalX:105,verticalFrom:330.35,verticalTo:545.35};
 const colors=['#ef6d65','#e4bd53','#75b78a','#798ddd'];
 const marks=['circle','diamond','cross','square'];
-let columns=[],ball,particles=[],floaters=[],state='ready',mode='classic',score=0,shots=0,elapsed=0,timer=0,interval=8,drag=null,trail=[],last=0,sound=false,audio=null,angle=0,power=115,cleared=false;
+let columns=[],ball,particles=[],floaters=[],state='ready',mode='classic',score=0,shots=0,elapsed=0,timer=0,interval=8,drag=null,trail=[],last=0,sound=false,audio=null,angle=0,power=115,cleared=false,blockClock=0;
 let best={classic:0,relaxed:0};
 try{const saved=JSON.parse(localStorage.getItem('pocket-blocks-best-v1')||'{}');for(const k of Object.keys(best))best[k]=Math.max(0,Number(saved[k])||0)}catch{}
 const rand=n=>Math.floor(Math.random()*n),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -70,27 +73,48 @@ function block(allowSpecial=false){
 }
 function flashColor(b){return (Math.floor(elapsed/.16)+(b.phase||0))%4}
 
-function home(){return {x:REST.x,y:REST.y,flying:false,flight:null}}
-function returnHome(){ball=home();drag=null;trail=[]}
-function blockRect(c,r){return {x:(8+c*24.5)*SCALE,y:(248.5-r*24.5)*SCALE,size:20*SCALE}}
+function home(animate=false){return {x:REST.x,y:REST.y,flying:false,flight:null,returnAge:animate?0:RETURN_SECONDS}}
+function returnHome(animate=false){ball=home(animate);drag=null;trail=[]}
+function keyScale(keys,frame){const i=Math.min(keys.length-1,Math.floor(frame)),next=Math.min(i+1,keys.length-1);return keys[i]+(keys[next]-keys[i])*(frame-i)}
+function ballScale(){return ball.flying?keyScale(FLIGHT_SCALE,Math.min(16,ball.flight.time*FPS)):keyScale(RETURN_SCALE,Math.min(10,ball.returnAge*FPS))}
+function blockRow(b,r){return b.row??9-r}
+function rowCenter(row){return (38+24.5*row)*SCALE}
+function blockRect(c,r){const b=columns[c][r];return {x:(8+c*24.5)*SCALE,y:(b.drawY??rowCenter(blockRow(b,r)))-10*SCALE,size:20*SCALE}}
+function freshBoard(count){columns=Array.from({length:COLS},()=>Array.from({length:count},(_,r)=>({...block(),row:count-1-r,drawY:rowCenter(count-1-r),dropTicks:0})));blockClock=0}
+function stepBlocks(){
+ for(const col of columns)for(let r=0;r<col.length;r++){
+  const b=col[r],destination=9-r;b.row??=destination;b.drawY??=rowCenter(b.row);b.dropTicks??=0;
+  if(!b.dropTicks&&b.row<destination&&(!r||b.row+1<blockRow(col[r-1],r-1))){b.row++;b.dropTicks=DROP_TICKS}
+  if(b.dropTicks){const target=rowCenter(b.row);b.drawY=target+(b.drawY-target)/1.8;b.dropTicks--;if(!b.dropTicks)b.drawY=target}
+ }
+}
 function landingFor(p){return {x:2*ANCHOR.x-p.x,y:2*ANCHOR.y-p.y}}
 function landingCell(p){
  const c=Math.trunc((p.x/SCALE-4.5)/24.5),row=Math.trunc((p.y/SCALE-25.8)/24.5),r=9-row;
- return c>=0&&c<COLS&&row>=0&&row<=9&&r<columns[c].length?{c,r}:null;
+ if(c<0||c>=COLS||row<0||row>9)return null;
+ const index=columns[c].findIndex((b,i)=>blockRow(b,i)===row);return index<0?null:{c,r:index};
 }
 function pullTo(p){ball.x=clamp(p.x,DRAG_BOUNDS.left,DRAG_BOUNDS.right);ball.y=clamp(p.y,DRAG_BOUNDS.top,DRAG_BOUNDS.bottom)}
 function updateHud(){ $('score').textContent=score.toLocaleString();$('best').textContent=best[mode].toLocaleString();$('bestLabel').textContent='Best · '+mode }
 function storeBest(){if(score>best[mode]){best[mode]=score;try{localStorage.setItem('pocket-blocks-best-v1',JSON.stringify(best))}catch{}}updateHud()}
-function seed(){columns=Array.from({length:COLS},()=>Array.from({length:4+rand(2)},block));ball=home()}
+function seed(){freshBoard(6);ball=home()}
 function start(){score=0;shots=0;elapsed=0;timer=0;interval=8;drag=null;particles=[];floaters=[];trail=[];angle=0;power=115;seed();state='playing';$('overlay').hidden=true;$('pause').disabled=false;$('pause').textContent='Pause';updateHud();hint('Grab near the ball. Pull down, then release.');tone(420,.07);last=performance.now()}
 function hint(text){$('hint').textContent=text}
 function showOverlay(title,text,button,badge){$('overlayTitle').textContent=title;$('overlayText').textContent=text;$('start').textContent=button;$('overlayBadge').textContent=badge;$('modes').hidden=state==='paused';$('overlay').hidden=false}
 function end(){state='over';drag=null;ball.flying=false;storeBest();$('pause').disabled=true;showOverlay('One more round?',`You scored ${score.toLocaleString()} points. Clear the larger color groups to keep the stacks low.`,'Play again','The stacks reached the line');tone(160,.22)}
 function pause(){if(state!=='playing')return;if(drag)returnHome();state='paused';$('pause').textContent='Resume';showOverlay('Take a breather.','Your board is waiting right here.','Keep playing','Paused')}
 function resume(){if(state!=='paused')return;state='playing';$('overlay').hidden=true;$('pause').textContent='Pause';last=performance.now()}
-function addRow(){for(const col of columns)col.push(block(true));if(columns.some(col=>BASE-col.length*CELL<TOP))end();else hint(mode==='classic'?'Fresh blocks. Find a big color group.':'Fresh blocks. Three more shots until the next row.')}
+function addRow(){
+ if(columns.some(col=>col.some((b,r)=>blockRow(b,r)===0))){end();return}
+ for(const col of columns)col.push({...block(true),row:0,drawY:rowCenter(0),dropTicks:0});
+ hint(mode==='classic'?'Fresh blocks falling. Find a big color group.':'Fresh blocks falling. Three more shots until the next row.');
+}
 function tone(freq,duration=.1){if(!sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq*.65,audio.currentTime+duration);g.gain.setValueAtTime(.07,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
-function neighbors(c,r){return [[c-1,r],[c+1,r],[c,r-1],[c,r+1]].filter(([x,y])=>x>=0&&x<COLS&&y>=0&&y<columns[x].length)}
+function neighbors(c,r){
+ const row=blockRow(columns[c][r],r),result=[];
+ for(const [x,targetRow] of [[c-1,row],[c+1,row],[c,row-1],[c,row+1]])if(x>=0&&x<COLS){const i=columns[x].findIndex((b,z)=>blockRow(b,z)===targetRow);if(i>=0)result.push([x,i])}
+ return result;
+}
 function popGroup(c,r){
  const target=columns[c][r],selected=new Set(),key=(x,y)=>x+','+y;
  let recolor=null;
@@ -99,14 +123,16 @@ function popGroup(c,r){
   if(b.special==='flash'){recolor=flashColor(b);return}
   if(b.special==='bomb'){
    // Original bomb footprint: two cells in each direction (5 × 5).
-   for(let a=Math.max(0,x-2);a<=Math.min(COLS-1,x+2);a++)for(let z=Math.max(0,y-2);z<=Math.min(columns[a].length-1,y+2);z++)activate(a,z);
+   const row=blockRow(b,y);for(let a=Math.max(0,x-2);a<=Math.min(COLS-1,x+2);a++)for(let z=0;z<columns[a].length;z++)if(Math.abs(blockRow(columns[a][z],z)-row)<=2)activate(a,z);
    return;
   }
   for(const [a,z] of neighbors(x,y))if(columns[a][z].color===b.color&&!columns[a][z].special)activate(a,z);
  }
  activate(c,r);
  const count=selected.size,points=count*count*10;score+=points;storeBest();
- for(const id of selected){const [x,y]=id.split(',').map(Number),b=columns[x][y],px=LEFT+x*CELL+CELL/2,py=BASE-(y+.5)*CELL;for(let n=0;n<(reduced?0:7);n++)particles.push({x:px,y:py,vx:(Math.random()-.5)*160,vy:-60-Math.random()*100,t:.5,color:colors[b.special==='flash'?flashColor(b):b.color]})}
+ for(const id of selected){const [x,y]=id.split(',').map(Number),b=columns[x][y],px=LEFT+x*CELL+CELL/2,py=b.drawY??rowCenter(blockRow(b,y));for(let n=0;n<(reduced?0:7);n++)particles.push({x:px,y:py,vx:(Math.random()-.5)*160,vy:-60-Math.random()*100,t:.5,color:colors[b.special==='flash'?flashColor(b):b.color]})}
+ // Keep the remaining pieces' current rows; gaps close through the fall animation.
+ for(const col of columns)col.forEach((b,r)=>{b.row??=9-r;b.drawY??=rowCenter(b.row)});
  for(let x=0;x<COLS;x++)columns[x]=columns[x].filter((_,y)=>!selected.has(key(x,y)));
  if(recolor!==null){for(const col of columns)for(const b of col){b.color=recolor;b.special=null;delete b.remaining;delete b.tick}hint('One color across the whole board!')}
  else hint(target.special==='bomb'?'Bomb! A five-by-five blast.':count>3?`${count} blocks! +${points.toLocaleString()} points.`:'Aim for connected colors to clear bigger groups.');
@@ -114,15 +140,15 @@ function popGroup(c,r){
  if(columns.every(col=>col.length===0)){score+=1000;storeBest();floaters.push({x:W/2,y:230,text:'CLEAR! +1,000',t:1.6});cleared=true}
 }
 function launch(dx,dy){
- if(state!=='playing'||ball.flying)return false;
+ if(state!=='playing'||ball.flying||ball.returnAge<RETURN_SECONDS)return false;
  pullTo({x:ANCHOR.x+dx,y:ANCHOR.y+dy});
  const from={x:ball.x,y:ball.y},to=landingFor(from);
  ball.flying=true;ball.flight={from,to,time:0};drag=null;trail=[];tone(240,.06);return true;
 }
-function finishShot(){returnHome();shots++;if(cleared){columns=Array.from({length:COLS},()=>Array.from({length:3},block));cleared=false;timer=0}if(mode==='relaxed'&&shots%3===0)addRow()}
+function finishShot(){returnHome(true);shots++;if(cleared){freshBoard(3);cleared=false;timer=0}if(mode==='relaxed'&&shots%3===0)addRow()}
 function point(e){const b=canvas.getBoundingClientRect();return {x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height}}
 canvas.addEventListener('pointerdown',e=>{
- if(state!=='playing'||ball.flying||drag||e.isPrimary===false)return;e.preventDefault();const p=point(e),b=canvas.getBoundingClientRect(),grabRadius=Math.max(45,40*W/b.width);
+ if(state!=='playing'||ball.flying||ball.returnAge<RETURN_SECONDS||drag||e.isPrimary===false)return;e.preventDefault();const p=point(e),b=canvas.getBoundingClientRect(),grabRadius=Math.max(45,40*W/b.width);
  if(Math.hypot(p.x-ball.x,p.y-ball.y)>grabRadius)return;
  drag={id:e.pointerId,startX:p.x,startY:p.y,ballStartX:ball.x,ballStartY:ball.y};canvas.setPointerCapture(e.pointerId);tone(600,.025);
 });
@@ -141,16 +167,16 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});window.addEventListener('blur',()=>pause());
 function update(dt){
  elapsed+=dt;
- // At 25 fps the original uses two timeline frames for each of 25 delay steps.
- // Each numeral therefore lasts two seconds; zero restores an ordinary block.
- for(const col of columns)for(const b of col)if(b.special){b.tick+=dt;while(b.tick>=2&&b.special){b.tick-=2;b.remaining--;if(b.remaining<=0){b.special=null;b.color=rand(4);delete b.remaining;delete b.tick}}}
+ // A goto-and-play loop re-enters the preceding action frame immediately: 25 ticks/second.
+ for(const col of columns)for(const b of col)if(b.special){b.tick+=dt;while(b.tick>=1&&b.special){b.tick-=1;b.remaining--;if(b.remaining<=0){b.special=null;b.color=rand(4);delete b.remaining;delete b.tick}}}
+ blockClock+=dt;while(blockClock>=1/FPS-1e-10){stepBlocks();blockClock-=1/FPS}
+ if(!ball.flying)ball.returnAge=Math.min(RETURN_SECONDS,ball.returnAge+dt);
  if(mode==='classic'){interval=Math.max(3.5,8-elapsed/100);timer+=dt;if(timer>=interval){timer=0;addRow();if(state!=='playing')return}}
  if(ball.flying){
   const f=ball.flight;f.time=Math.min(FLIGHT_SECONDS,f.time+dt);const t=f.time/FLIGHT_SECONDS;
   ball.x=f.from.x+(f.to.x-f.from.x)*t;ball.y=f.from.y+(f.to.y-f.from.y)*t;
   // Airborne shots pass above every intervening block. Resolve just the final cell.
   if(t>=1){const cell=landingCell(f.to);if(cell)popGroup(cell.c,cell.r);else hint('Empty landing. Use the grid to adjust your next pull.');finishShot()}
-  if(!reduced&&ball.flying){trail.push({x:ball.x,y:ball.y});if(trail.length>10)trail.shift()}
  }
  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.t-=dt}particles=particles.filter(p=>p.t>0);
  for(const f of floaters){f.y-=24*dt;f.t-=dt}floaters=floaters.filter(f=>f.t>0);
@@ -190,10 +216,13 @@ function draw(){
   ctx.beginPath();ctx.moveTo(ANCHOR.x,ANCHOR.y);ctx.lineTo(ball.x,ball.y);ctx.strokeStyle=drag?'#edc78dbb':'#edc78d55';ctx.lineWidth=1.2;ctx.stroke();
   if(!drag&&document.activeElement===canvas){ctx.setLineDash([3,9]);ctx.beginPath();ctx.moveTo(ANCHOR.x,ANCHOR.y);ctx.lineTo(ANCHOR.x-Math.sin(angle)*power,ANCHOR.y+Math.cos(angle)*power);ctx.strokeStyle='#f5dba777';ctx.stroke();ctx.setLineDash([])}
  }
- trail.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,R*(i+1)/trail.length*.7,0,7);ctx.fillStyle=`rgba(240,220,185,${i/trail.length*.18})`;ctx.fill()});
- const flightT=ball.flying?ball.flight.time/FLIGHT_SECONDS:0,lift=ball.flying?Math.sin(Math.PI*flightT)*14*SCALE:0,ballSize=R*(1-.16*flightT),drawY=ball.y-lift;
- ctx.beginPath();ctx.ellipse(ball.x+2,ball.y+6,13*(1-lift/120),7*(1-lift/120),0,0,7);ctx.fillStyle='#150f0a88';ctx.fill();
- const metal=ctx.createRadialGradient(ball.x-4,drawY-5,1,ball.x,drawY,13);metal.addColorStop(0,'#fff');metal.addColorStop(.35,'#e2e6e2');metal.addColorStop(.7,'#87958f');metal.addColorStop(1,'#3b4643');ctx.fillStyle=metal;ctx.beginPath();ctx.arc(ball.x,drawY,ballSize,0,7);ctx.fill();
+ const sizeScale=ballScale(),ballSize=R*sizeScale;
+ // The original conveys height through its growing/shrinking metal ball, not a sine-wave lift.
+ ctx.beginPath();ctx.ellipse(ball.x+2.8*SCALE,ball.y+2.3*SCALE,15.25*SCALE,9*SCALE,0,0,7);ctx.fillStyle='#100b0855';ctx.fill();
+ ctx.save();ctx.beginPath();ctx.arc(ball.x,ball.y,ballSize,0,7);ctx.clip();
+ ctx.translate(ball.x,ball.y-3.65*SCALE*sizeScale);ctx.scale(16.725*SCALE*sizeScale,11.3*SCALE*sizeScale);
+ const metal=ctx.createRadialGradient(0,0,0,0,0,1);metal.addColorStop(0,'#fff');metal.addColorStop(105/255,'#fff');metal.addColorStop(143/255,'#5a5a5a');metal.addColorStop(1,'#929292');
+ ctx.fillStyle=metal;ctx.fillRect(-2,-2,4,4);ctx.restore();
  for(const p of particles){ctx.globalAlpha=Math.max(0,p.t*2);round(p.x,p.y,4,4,1,p.color)}ctx.globalAlpha=1;
  for(const f of floaters){ctx.globalAlpha=clamp(f.t*2,0,1);ctx.font='bold 20px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillStyle='#fff0bd';ctx.shadowColor='#20140e';ctx.shadowBlur=4;ctx.fillText(f.text,f.x,f.y);ctx.shadowBlur=0}ctx.globalAlpha=1;
 }
