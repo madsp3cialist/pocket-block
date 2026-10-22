@@ -28,17 +28,17 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:210/545;border-radius:1
  <header><div><p class="eyebrow">A little pocket arcade</p><h1>Pocket <span>Blocks</span></h1></div><div class="tools"><button id="sound" aria-pressed="false" aria-label="Turn sound on">Sound off</button><button id="pause" disabled>Pause</button></div></header>
  <div class="hud"><div><span class="label">Score</span><span class="value" id="score">0</span></div><div class="best"><span class="label" id="bestLabel">Best · classic</span><span class="value" id="best">0</span></div></div>
  <div class="frame">
-  <canvas id="game" width="720" height="1869" aria-label="Block-clearing slingshot game. Drag the silver ball down and release to shoot. Keyboard: left and right aim, up and down adjust power, space shoots, P pauses." tabindex="0"></canvas>
+  <canvas id="game" width="720" height="1869" aria-label="Block-clearing slingshot game. Pull the silver ball back from its fixed tether point and release to land on a target. Keyboard: left and right aim, up and down adjust power, space shoots, P pauses." tabindex="0"></canvas>
   <div class="overlay" id="overlay">
    <span class="badge" id="overlayBadge">Made for your fingertips</span><h2 id="overlayTitle">A satisfying little<br><span class="accent">chain reaction.</span></h2>
-   <p id="overlayText">Pull the silver ball down and let go. Hit a color to clear its connected group. Keep the stacks below the top line.</p>
+   <p id="overlayText">Pull the tethered ball back and let go. Fly over nearby blocks and land on a color group. Keep the stacks below the top line.</p>
    <div class="mode" id="modes" aria-label="Game mode"><button data-mode="classic" aria-pressed="true">Classic · timed</button><button data-mode="relaxed" aria-pressed="false">Relaxed · untimed</button></div>
    <button class="primary" id="start">Let's play</button>
   </div>
  </div>
  <p class="hint" id="hint"><strong>Grab near the ball.</strong> Pull down, then release.</p>
- <details><summary>How to play</summary><p>Touch the ball or its halo, pull down and sideways to aim, then release. A longer pull makes a stronger shot. Touch anywhere else in the lower area to move the ball before shooting. The three horizontal lines and center vertical line reproduce the original board grid at the same proportions. A short tap or an upward drag cancels.</p><p>Hit any block to clear its connected color group. Bigger groups earn more. A flashing block turns the remaining board into its displayed color when hit. A numbered bomb clears a 5 × 5 area when hit. Both special types count down from 9; if time runs out, they become ordinary blocks. New blocks fall into the stacks. If a stack crosses the dashed top line, the game ends.</p><p>Classic adds blocks on a timer. Relaxed adds them after every three shots. Your best score is saved separately for each mode on this device when browser storage is available. Switching away automatically pauses.</p><p>Keyboard: ← → aim, ↑ ↓ change power, Space shoots, P pauses. Sound is optional. In Safari, use Share → Add to Home Screen for an app-like shortcut.</p></details>
- <footer>Inspired by Ferry Halim's Bauns. Independent recreation.</footer>
+ <details><summary>How to play</summary><p>Grab the ball or its halo and pull it back from the fixed tether point. Release to fly over the blocks and land on a target. The landing spot is the mirror of the release spot across the tether: pull farther down to land farther up; pull right to land left. Use the original board grid to judge the distance. The ball always returns to the same resting spot. Tapping elsewhere does not move it. A tap or an interrupted touch cancels.</p><p>Only the landing cell is hit. Blocks underneath the flight path are passed over. Land on any block to clear its connected color group. Bigger groups earn more. A flashing block turns the remaining board into its displayed color when hit. A numbered bomb clears a 5 × 5 area when hit. Both special types count down from 9; if time runs out, they become ordinary blocks. New blocks fall into the stacks. If a stack crosses the dashed top line, the game ends.</p><p>Classic adds blocks on a timer. Relaxed adds them after every three shots. Your best score is saved separately for each mode on this device when browser storage is available. Switching away automatically pauses.</p><p>Keyboard: ← → aim, ↑ ↓ change power, Space shoots, P pauses. Sound is optional. In Safari, use Share → Add to Home Screen for an app-like shortcut.</p></details>
+ <footer>Inspired by Ferry Halim's Bauns. Independent recreation. · v3</footer>
 </main>
 <script>
 'use strict';
@@ -46,7 +46,11 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:210/545;border-radius:1
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const $=id=>document.getElementById(id);
 // The original board is 210 × 545. Keep its coordinate proportions unchanged.
-const SCALE=360/210,W=360,H=545*SCALE,LEFT=12,CELL=42,COLS=8,BASE=270.75*SCALE,TOP=25*SCALE,BALL_Y=435.1*SCALE,R=11;
+const SCALE=360/210,W=360,H=545*SCALE,LEFT=5.75*SCALE,CELL=24.5*SCALE,COLS=8,BASE=270.75*SCALE,TOP=25*SCALE,R=11;
+// Original tether, resting position, drag bounds, and 16 two-frame flight steps at 25 fps.
+const ANCHOR={x:105*SCALE,y:280*SCALE},REST={x:106*SCALE,y:300*SCALE};
+const DRAG_BOUNDS={left:20*SCALE,right:190*SCALE,top:298*SCALE,bottom:523*SCALE};
+const FLIGHT_SECONDS=32/25;
 const GRID={horizontal:[330.35,405.35,479.35],verticalX:105,verticalFrom:330.35,verticalTo:545.35};
 const colors=['#ef6d65','#e4bd53','#75b78a','#798ddd'];
 const marks=['circle','diamond','cross','square'];
@@ -66,7 +70,15 @@ function block(allowSpecial=false){
 }
 function flashColor(b){return (Math.floor(elapsed/.16)+(b.phase||0))%4}
 
-function home(){return {x:W/2,y:BALL_Y,vx:0,vy:0,flying:false}}
+function home(){return {x:REST.x,y:REST.y,flying:false,flight:null}}
+function returnHome(){ball=home();drag=null;trail=[]}
+function blockRect(c,r){return {x:(8+c*24.5)*SCALE,y:(248.5-r*24.5)*SCALE,size:20*SCALE}}
+function landingFor(p){return {x:2*ANCHOR.x-p.x,y:2*ANCHOR.y-p.y}}
+function landingCell(p){
+ const c=Math.trunc((p.x/SCALE-4.5)/24.5),row=Math.trunc((p.y/SCALE-25.8)/24.5),r=9-row;
+ return c>=0&&c<COLS&&row>=0&&row<=9&&r<columns[c].length?{c,r}:null;
+}
+function pullTo(p){ball.x=clamp(p.x,DRAG_BOUNDS.left,DRAG_BOUNDS.right);ball.y=clamp(p.y,DRAG_BOUNDS.top,DRAG_BOUNDS.bottom)}
 function updateHud(){ $('score').textContent=score.toLocaleString();$('best').textContent=best[mode].toLocaleString();$('bestLabel').textContent='Best · '+mode }
 function storeBest(){if(score>best[mode]){best[mode]=score;try{localStorage.setItem('pocket-blocks-best-v1',JSON.stringify(best))}catch{}}updateHud()}
 function seed(){columns=Array.from({length:COLS},()=>Array.from({length:4+rand(2)},block));ball=home()}
@@ -74,7 +86,7 @@ function start(){score=0;shots=0;elapsed=0;timer=0;interval=8;drag=null;particle
 function hint(text){$('hint').textContent=text}
 function showOverlay(title,text,button,badge){$('overlayTitle').textContent=title;$('overlayText').textContent=text;$('start').textContent=button;$('overlayBadge').textContent=badge;$('modes').hidden=state==='paused';$('overlay').hidden=false}
 function end(){state='over';drag=null;ball.flying=false;storeBest();$('pause').disabled=true;showOverlay('One more round?',`You scored ${score.toLocaleString()} points. Clear the larger color groups to keep the stacks low.`,'Play again','The stacks reached the line');tone(160,.22)}
-function pause(){if(state!=='playing')return;state='paused';drag=null;$('pause').textContent='Resume';showOverlay('Take a breather.','Your board is waiting right here.','Keep playing','Paused')}
+function pause(){if(state!=='playing')return;if(drag)returnHome();state='paused';$('pause').textContent='Resume';showOverlay('Take a breather.','Your board is waiting right here.','Keep playing','Paused')}
 function resume(){if(state!=='paused')return;state='playing';$('overlay').hidden=true;$('pause').textContent='Pause';last=performance.now()}
 function addRow(){for(const col of columns)col.push(block(true));if(columns.some(col=>BASE-col.length*CELL<TOP))end();else hint(mode==='classic'?'Fresh blocks. Find a big color group.':'Fresh blocks. Three more shots until the next row.')}
 function tone(freq,duration=.1){if(!sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq*.65,audio.currentTime+duration);g.gain.setValueAtTime(.07,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
@@ -101,17 +113,27 @@ function popGroup(c,r){
  floaters.push({x:clamp(ball.x,60,W-60),y:ball.y,text:'+'+points,t:1});tone(320+Math.min(count,15)*35,.13);
  if(columns.every(col=>col.length===0)){score+=1000;storeBest();floaters.push({x:W/2,y:230,text:'CLEAR! +1,000',t:1.6});cleared=true}
 }
-function launch(dx,dy){const pull=Math.hypot(dx,dy);if(dy<10||pull<16){hint('Pull down from the ball, then release.');return false}const length=Math.min(150,pull),speed=270+length*3.4;ball.vx=-dx/pull*speed;ball.vy=-dy/pull*speed;ball.flying=true;trail=[];tone(240,.06);return true}
-function finishShot(){ball.flying=false;ball.y=BALL_Y;ball.x=clamp(ball.x,35,W-35);ball.vx=ball.vy=0;trail=[];shots++;if(cleared){columns=Array.from({length:COLS},()=>Array.from({length:3},block));cleared=false;timer=0}if(mode==='relaxed'&&shots%3===0)addRow()}
+function launch(dx,dy){
+ if(state!=='playing'||ball.flying)return false;
+ pullTo({x:ANCHOR.x+dx,y:ANCHOR.y+dy});
+ const from={x:ball.x,y:ball.y},to=landingFor(from);
+ ball.flying=true;ball.flight={from,to,time:0};drag=null;trail=[];tone(240,.06);return true;
+}
+function finishShot(){returnHome();shots++;if(cleared){columns=Array.from({length:COLS},()=>Array.from({length:3},block));cleared=false;timer=0}if(mode==='relaxed'&&shots%3===0)addRow()}
 function point(e){const b=canvas.getBoundingClientRect();return {x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height}}
 canvas.addEventListener('pointerdown',e=>{
  if(state!=='playing'||ball.flying||drag||e.isPrimary===false)return;e.preventDefault();const p=point(e),b=canvas.getBoundingClientRect(),grabRadius=Math.max(45,40*W/b.width);
- if(Math.hypot(p.x-ball.x,p.y-ball.y)>grabRadius){if(p.y<298*SCALE)return;ball.x=clamp(p.x,35,W-35)}
- drag={id:e.pointerId,startX:p.x,startY:p.y,x:p.x,y:p.y};canvas.setPointerCapture(e.pointerId);tone(600,.025);
+ if(Math.hypot(p.x-ball.x,p.y-ball.y)>grabRadius)return;
+ drag={id:e.pointerId,startX:p.x,startY:p.y,ballStartX:ball.x,ballStartY:ball.y};canvas.setPointerCapture(e.pointerId);tone(600,.025);
 });
-canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;e.preventDefault();const p=point(e);drag.x=p.x;drag.y=p.y});
-function release(e,cancel=false){if(!drag||e.pointerId!==drag.id)return;e.preventDefault();const d=drag,p=point(e);drag=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);if(!cancel&&state==='playing')launch(p.x-d.startX,p.y-d.startY)}
-canvas.addEventListener('pointerup',e=>release(e));canvas.addEventListener('pointercancel',e=>release(e,true));canvas.addEventListener('lostpointercapture',()=>{drag=null});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;e.preventDefault();const p=point(e);pullTo({x:drag.ballStartX+p.x-drag.startX,y:drag.ballStartY+p.y-drag.startY})});
+function release(e,cancel=false){
+ if(!drag||e.pointerId!==drag.id)return;e.preventDefault();const d=drag,p=point(e);drag=null;
+ if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
+ if(cancel||state!=='playing'||Math.hypot(p.x-d.startX,p.y-d.startY)<6*SCALE){returnHome();return}
+ pullTo({x:d.ballStartX+p.x-d.startX,y:d.ballStartY+p.y-d.startY});launch(ball.x-ANCHOR.x,ball.y-ANCHOR.y);
+}
+canvas.addEventListener('pointerup',e=>release(e));canvas.addEventListener('pointercancel',e=>release(e,true));canvas.addEventListener('lostpointercapture',()=>{if(drag)returnHome()});canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('keydown',e=>{if(e.code==='KeyP'){e.preventDefault();state==='paused'?resume():pause();return}if(state!=='playing'||ball.flying)return;if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();if(e.code==='ArrowLeft')angle=clamp(angle-.08,-1.05,1.05);if(e.code==='ArrowRight')angle=clamp(angle+.08,-1.05,1.05);if(e.code==='ArrowUp')power=clamp(power+10,40,150);if(e.code==='ArrowDown')power=clamp(power-10,40,150);if(e.code==='Space')launch(-Math.sin(angle)*power,Math.cos(angle)*power)});
 $('start').addEventListener('click',()=>state==='paused'?resume():start());$('pause').addEventListener('click',()=>state==='paused'?resume():pause());
 $('sound').addEventListener('click',()=>{sound=!sound;$('sound').textContent=sound?'Sound on':'Sound off';$('sound').setAttribute('aria-pressed',String(sound));$('sound').setAttribute('aria-label',sound?'Turn sound off':'Turn sound on');tone(520,.08)});
@@ -124,17 +146,10 @@ function update(dt){
  for(const col of columns)for(const b of col)if(b.special){b.tick+=dt;while(b.tick>=2&&b.special){b.tick-=2;b.remaining--;if(b.remaining<=0){b.special=null;b.color=rand(4);delete b.remaining;delete b.tick}}}
  if(mode==='classic'){interval=Math.max(3.5,8-elapsed/100);timer+=dt;if(timer>=interval){timer=0;addRow();if(state!=='playing')return}}
  if(ball.flying){
-  const steps=Math.max(1,Math.ceil(Math.hypot(ball.vx,ball.vy)*dt/5)),step=dt/steps;
-  for(let n=0;n<steps&&ball.flying;n++){
-   ball.x+=ball.vx*step;ball.y+=ball.vy*step;
-   if(ball.x<12){ball.x=12;ball.vx=Math.abs(ball.vx)}if(ball.x>W-12){ball.x=W-12;ball.vx=-Math.abs(ball.vx)}
-   if(ball.y<15){ball.y=15;ball.vy=Math.abs(ball.vy)}
-   if(ball.vy<0){let hit=false;for(let c=0;c<COLS&&!hit;c++)for(let r=0;r<columns[c].length;r++){
-    const x=LEFT+c*CELL+2,y=BASE-(r+1)*CELL+2,closestX=clamp(ball.x,x,x+35),closestY=clamp(ball.y,y,y+35);
-    if((ball.x-closestX)**2+(ball.y-closestY)**2<=R*R){popGroup(c,r);ball.vy=Math.abs(ball.vy);hit=true;break}
-   }}
-   if(ball.y>=BALL_Y&&ball.vy>0)finishShot();
-  }
+  const f=ball.flight;f.time=Math.min(FLIGHT_SECONDS,f.time+dt);const t=f.time/FLIGHT_SECONDS;
+  ball.x=f.from.x+(f.to.x-f.from.x)*t;ball.y=f.from.y+(f.to.y-f.from.y)*t;
+  // Airborne shots pass above every intervening block. Resolve just the final cell.
+  if(t>=1){const cell=landingCell(f.to);if(cell)popGroup(cell.c,cell.r);else hint('Empty landing. Use the grid to adjust your next pull.');finishShot()}
   if(!reduced&&ball.flying){trail.push({x:ball.x,y:ball.y});if(trail.length>10)trail.shift()}
  }
  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=300*dt;p.t-=dt}particles=particles.filter(p=>p.t>0);
@@ -154,13 +169,13 @@ function draw(){
  round(24,15,W-48,5,2,'#221812');round(24,15,(W-48)*(1-prog),5,2,prog>.75?'#ee9d75':'#e5bd7c');
  ctx.font='8px -apple-system,sans-serif';ctx.fillStyle='#efceb1aa';ctx.textAlign='center';ctx.fillText(mode==='classic'?'NEXT ROW':`${3-shots%3} SHOTS TO NEXT ROW`,W/2,30);
  for(let c=0;c<COLS;c++)for(let r=0;r<columns[c].length;r++){
-  const b=columns[c][r],x=LEFT+c*CELL+3,y=BASE-(r+1)*CELL+3,displayColor=b.special==='flash'?flashColor(b):b.color;
-  round(x,y+3,35,35,7,'#100c0990');const g=ctx.createLinearGradient(x,y,x+25,y+35);g.addColorStop(0,colors[displayColor]);g.addColorStop(1,colors[displayColor]+'bb');round(x,y,35,35,7,g);
-  round(x+3,y+2,29,12,5,'#fff2');ctx.fillStyle='#fff9';ctx.beginPath();ctx.ellipse(x+8,y+7,2,2.5,.5,0,7);ctx.fill();
+  const b=columns[c][r],{x,y,size}=blockRect(c,r),displayColor=b.special==='flash'?flashColor(b):b.color;
+  round(x,y+3,size,size,7,'#100c0990');const g=ctx.createLinearGradient(x,y,x+25,y+size);g.addColorStop(0,colors[displayColor]);g.addColorStop(1,colors[displayColor]+'bb');round(x,y,size,size,7,g);
+  round(x+3,y+2,size-6,12,5,'#fff2');ctx.fillStyle='#fff9';ctx.beginPath();ctx.ellipse(x+8,y+7,2,2.5,.5,0,7);ctx.fill();
   if(b.special){
-   ctx.font='bold 24px Georgia';ctx.textAlign='center';ctx.fillStyle='#fffbe6';ctx.shadowColor='#15100a';ctx.shadowBlur=3;ctx.fillText(String(b.remaining),x+17.5,y+26);ctx.shadowBlur=0;
-   if(b.special==='flash'){ctx.strokeStyle='#fff9';ctx.lineWidth=1.5;ctx.strokeRect(x+1.5,y+1.5,32,32)}
-  }else symbol(marks[b.color],x+18,y+20,'#271b1755');
+   ctx.font='bold 24px Georgia';ctx.textAlign='center';ctx.fillStyle='#fffbe6';ctx.shadowColor='#15100a';ctx.shadowBlur=3;ctx.fillText(String(b.remaining),x+size/2,y+26);ctx.shadowBlur=0;
+   if(b.special==='flash'){ctx.strokeStyle='#fff9';ctx.lineWidth=1.5;ctx.strokeRect(x+1.5,y+1.5,size-3,size-3)}
+  }else symbol(marks[b.color],x+size/2,y+20,'#271b1755');
  }
  ctx.fillStyle='#e6b67744';ctx.fillRect(16,BASE+8,W-32,2);
  // Measured from the original vector grid, in the original 210 × 545 coordinates.
@@ -168,14 +183,17 @@ function draw(){
  const gridOutline=[[210,329.85],[210,330.85],[105.5,330.85],[105.5,404.85],[210,404.85],[210,405.85],[105.5,405.85],[105.5,478.85],[210,478.85],[210,479.85],[105.5,479.85],[105.5,545.35],[104.5,545.35],[104.5,479.85],[0,479.85],[0,478.85],[104.5,478.85],[104.5,405.85],[0,405.85],[0,404.85],[104.5,404.85],[104.5,330.85],[0,330.85],[0,329.85]];
  ctx.beginPath();gridOutline.forEach(([x,y],i)=>i?ctx.lineTo(x*SCALE,y*SCALE):ctx.moveTo(x*SCALE,y*SCALE));ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
  ctx.fillStyle='#f8d9a530';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText('P U L L  B A C K  ·  L E T  G O',W/2,H-18);
+ // The tether is fixed to the original (105, 280) point, independent of drag position.
+ ctx.beginPath();ctx.arc(ANCHOR.x,ANCHOR.y,2,0,Math.PI*2);ctx.fillStyle='#edc78d99';ctx.fill();
  if(state==='playing'&&!ball.flying){
   ctx.beginPath();ctx.arc(ball.x,ball.y,42,0,Math.PI*2);ctx.strokeStyle=drag?'#f6dfb955':'#f6dfb92a';ctx.lineWidth=1;ctx.stroke();
-  if(drag){const dx=drag.x-drag.startX,dy=drag.y-drag.startY,len=Math.hypot(dx,dy);if(dy>8&&len>15){const nx=-dx/len,ny=-dy/len;ctx.save();ctx.setLineDash([3,9]);ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+nx*160,ball.y+ny*160);ctx.strokeStyle='#f5dba7bb';ctx.lineWidth=2;ctx.stroke();ctx.restore();const pull=Math.min(135,len);ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x-nx*pull,ball.y-ny*pull);ctx.strokeStyle='#edc78d77';ctx.lineWidth=3;ctx.stroke();ctx.beginPath();ctx.arc(ball.x-nx*pull,ball.y-ny*pull,6,0,7);ctx.fillStyle='#edc78d';ctx.fill()}}
-  else if(document.activeElement===canvas){ctx.setLineDash([3,9]);ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+Math.sin(angle)*100,ball.y-Math.cos(angle)*100);ctx.strokeStyle='#f5dba777';ctx.stroke();ctx.setLineDash([])}
+  ctx.beginPath();ctx.moveTo(ANCHOR.x,ANCHOR.y);ctx.lineTo(ball.x,ball.y);ctx.strokeStyle=drag?'#edc78dbb':'#edc78d55';ctx.lineWidth=1.2;ctx.stroke();
+  if(!drag&&document.activeElement===canvas){ctx.setLineDash([3,9]);ctx.beginPath();ctx.moveTo(ANCHOR.x,ANCHOR.y);ctx.lineTo(ANCHOR.x-Math.sin(angle)*power,ANCHOR.y+Math.cos(angle)*power);ctx.strokeStyle='#f5dba777';ctx.stroke();ctx.setLineDash([])}
  }
  trail.forEach((p,i)=>{ctx.beginPath();ctx.arc(p.x,p.y,R*(i+1)/trail.length*.7,0,7);ctx.fillStyle=`rgba(240,220,185,${i/trail.length*.18})`;ctx.fill()});
- ctx.beginPath();ctx.ellipse(ball.x+2,ball.y+6,13,7,0,0,7);ctx.fillStyle='#150f0a88';ctx.fill();
- const metal=ctx.createRadialGradient(ball.x-4,ball.y-5,1,ball.x,ball.y,13);metal.addColorStop(0,'#fff');metal.addColorStop(.35,'#e2e6e2');metal.addColorStop(.7,'#87958f');metal.addColorStop(1,'#3b4643');ctx.fillStyle=metal;ctx.beginPath();ctx.arc(ball.x,ball.y,R,0,7);ctx.fill();
+ const flightT=ball.flying?ball.flight.time/FLIGHT_SECONDS:0,lift=ball.flying?Math.sin(Math.PI*flightT)*14*SCALE:0,ballSize=R*(1-.16*flightT),drawY=ball.y-lift;
+ ctx.beginPath();ctx.ellipse(ball.x+2,ball.y+6,13*(1-lift/120),7*(1-lift/120),0,0,7);ctx.fillStyle='#150f0a88';ctx.fill();
+ const metal=ctx.createRadialGradient(ball.x-4,drawY-5,1,ball.x,drawY,13);metal.addColorStop(0,'#fff');metal.addColorStop(.35,'#e2e6e2');metal.addColorStop(.7,'#87958f');metal.addColorStop(1,'#3b4643');ctx.fillStyle=metal;ctx.beginPath();ctx.arc(ball.x,drawY,ballSize,0,7);ctx.fill();
  for(const p of particles){ctx.globalAlpha=Math.max(0,p.t*2);round(p.x,p.y,4,4,1,p.color)}ctx.globalAlpha=1;
  for(const f of floaters){ctx.globalAlpha=clamp(f.t*2,0,1);ctx.font='bold 20px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillStyle='#fff0bd';ctx.shadowColor='#20140e';ctx.shadowBlur=4;ctx.fillText(f.text,f.x,f.y);ctx.shadowBlur=0}ctx.globalAlpha=1;
 }

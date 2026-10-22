@@ -17,10 +17,11 @@ If you downloaded the ZIP on iPhone, tap it in the Files app to extract it first
 
 ## Play
 
-- Touch the ball or the generous halo around it, pull downward and sideways, then release. A longer pull produces a stronger shot.
-- Touch an empty spot in the lower area to reposition the ball horizontally and start a pull from there.
-- A tiny pull or an upward pull cancels. An interrupted touch cancels without shooting.
-- Each hit removes the connected color group, even if it contains only one block. A group of N blocks scores `N × N × 10` points.
+- Touch the ball or its generous pickup halo, pull downward and sideways, then release. The tether is fixed at the original `(105,280)` board coordinate. The ball rests at the original `(106,300)` coordinate and returns there after every shot.
+- The release position determines the landing position by reflection across the tether: `(landingX,landingY) = (210-releaseX,560-releaseY)` in the original 210 × 545 board coordinates. Pull farther down to land farther up. Pull right to land left.
+- The ball is pulled within the original rectangle: x=20…190 and y=298…523. Touching an empty part of the board does not move it. A tap or interrupted touch cancels and returns it home.
+- Airborne shots pass over intervening blocks. Only the final landing cell is hit; empty target cells miss. The flight uses the original 16 two-frame movement steps at 25 fps (1.28 seconds), with smooth visual interpolation and an added visual lift/shadow.
+- Each landing hit removes the connected color group, even if it contains only one block. A group of N blocks scores `N × N × 10` points.
 - A flashing block cycles through colors. Hitting it changes the remaining board to its displayed color.
 - A numbered bomb begins at 9. Hitting it blasts the 5 × 5 area centered on it; affected color groups and bombs can cause further clearing. Both special types count down once every two seconds, and turn into ordinary colored blocks if they expire.
 - The board uses the original 210 × 545 proportions. Its aiming grid reproduces the original vector outline, line width, yellow color, and alpha: horizontal line centers at y=330.35, 405.35, and 479.35; center vertical line at x=105. All positions scale uniformly with the board.
@@ -39,10 +40,14 @@ Gameplay and balancing are recreated rather than copied exactly from Bauns. A re
 
 ## Verification
 
-JavaScript syntax validation and automated logic checks passed for halo pickup, launching/scoring/return, cancelled touches, repositioning, connected groups, flashing recolor, countdown timing and expiry, 5 × 5 bomb clearing, new rows in both modes, pause/resume, overflow/game over, and restarting. Browser smoke checks covered starting, dragging to shoot, saved best score, and the pause screen. Physical iPhone Safari testing has not been performed.
+JavaScript syntax validation and automated checks pass for the original tether and resting coordinates, original drag limits, six reference pull-to-landing positions, offset pickup, cancellation, flying over intervening blocks, landing on an interior block, missing an empty cell, returning home after hits and misses, pause/resume, flashing recolor, countdown expiry, 5 × 5 bombs, new rows, game over, restarting, and drawing the scene. Physical iPhone Safari testing has not been performed.
 
 ## Revision 2
 
 Replaced the substitute star and instant burst blocks with flashing recolor and countdown bomb blocks, and matched the aiming grid geometry and styling to the original game file. Original SWF files, art, and sound are not included. The remaining game is still an independent recreation; matching these features does not certify that all original physics, timing, visuals, or scoring are identical.
 
 To update an existing GitHub Pages repository, replace its top-level `index.html` with this version and commit. Keep the current Pages settings. Wait for the deployment to finish, then reload Safari. If you still see the old version, close and reopen the page.
+
+## Revision 3
+
+Restored the fixed tether and resting point, the original pull rectangle and mirrored landing calculation, and landing-cell lookup. Removed horizontal repositioning, collisions with nearer blocks during flight, wall bouncing, and variable return positions. Block drawing and landing lookup now share the original cell geometry. The existing aiming grid and special blocks remain. This is still an independent recreation rather than a complete verified port of all original game behavior.
