@@ -21,7 +21,9 @@ If you downloaded the ZIP on iPhone, tap it in the Files app to extract it first
 - Touch an empty spot in the lower area to reposition the ball horizontally and start a pull from there.
 - A tiny pull or an upward pull cancels. An interrupted touch cancels without shooting.
 - Each hit removes the connected color group, even if it contains only one block. A group of N blocks scores `N × N × 10` points.
-- A ★ block clears all blocks of its color. A ✦ block clears its surrounding 3 × 3 neighborhood. Special tiles can trigger one another.
+- A flashing block cycles through colors. Hitting it changes the remaining board to its displayed color.
+- A numbered bomb begins at 9. Hitting it blasts the 5 × 5 area centered on it; affected color groups and bombs can cause further clearing. Both special types count down once every two seconds, and turn into ordinary colored blocks if they expire.
+- The board uses the original 210 × 545 proportions. Its aiming grid reproduces the original vector outline, line width, yellow color, and alpha: horizontal line centers at y=330.35, 405.35, and 479.35; center vertical line at x=105. All positions scale uniformly with the board.
 - Clearing the board earns 1,000 extra points and starts a fresh board.
 - **Classic:** new blocks arrive every 8 seconds at first, gradually speeding up to every 3.5 seconds. Keep stacks under the top line.
 - **Relaxed:** new blocks arrive every three completed shots, with no timer.
@@ -37,4 +39,10 @@ Gameplay and balancing are recreated rather than copied exactly from Bauns. A re
 
 ## Verification
 
-JavaScript syntax validation and automated logic checks passed for halo pickup, launching/scoring/return, cancelled touches, repositioning, connected groups, color-clearing special tiles, new rows in both modes, pause/resume, overflow/game over, and restarting. Browser smoke checks covered starting, dragging to shoot, saved best score, and the pause screen. Physical iPhone Safari testing has not been performed.
+JavaScript syntax validation and automated logic checks passed for halo pickup, launching/scoring/return, cancelled touches, repositioning, connected groups, flashing recolor, countdown timing and expiry, 5 × 5 bomb clearing, new rows in both modes, pause/resume, overflow/game over, and restarting. Browser smoke checks covered starting, dragging to shoot, saved best score, and the pause screen. Physical iPhone Safari testing has not been performed.
+
+## Revision 2
+
+Replaced the substitute star and instant burst blocks with flashing recolor and countdown bomb blocks, and matched the aiming grid geometry and styling to the original game file. Original SWF files, art, and sound are not included. The remaining game is still an independent recreation; matching these features does not certify that all original physics, timing, visuals, or scoring are identical.
+
+To update an existing GitHub Pages repository, replace its top-level `index.html` with this version and commit. Keep the current Pages settings. Wait for the deployment to finish, then reload Safari. If you still see the old version, close and reopen the page.

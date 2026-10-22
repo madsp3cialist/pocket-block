@@ -15,11 +15,11 @@ main{width:min(100%,440px);margin:auto;padding:12px 16px 16px;padding-top:max(12
 header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}h1{font-family:Georgia,serif;font-weight:400;font-size:25px;letter-spacing:-.8px;margin:0}h1 span{color:#e6b878;font-style:italic}.eyebrow{font-size:9px;letter-spacing:2.8px;text-transform:uppercase;color:#bfa58c;margin:0 0 4px}
 .tools{display:flex;gap:6px}button{font:inherit;cursor:pointer;color:#f8e8d2;background:#3d3028;border:1px solid #705342;border-radius:12px;min-height:44px;padding:8px 13px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}button:active{transform:translateY(1px);background:#584232}button:focus-visible,summary:focus-visible{outline:2px solid #f5d18c;outline-offset:3px}.tools button{padding:7px 10px;font-size:12px}
 .hud{display:flex;justify-content:space-between;align-items:end;margin-bottom:8px;padding:0 3px}.label{display:block;color:#c4a88b;font-size:9px;letter-spacing:1.7px;text-transform:uppercase}.value{font-size:24px;font-variant-numeric:tabular-nums;line-height:1.2}.best{text-align:right}.best .value{font-size:18px;color:#e2bf93}
-.frame{position:relative;margin:auto;width:min(100%,calc((100svh - 212px)*.5));min-width:230px;border-radius:17px;padding:7px;background:linear-gradient(110deg,#8a5f3f,#3e271d 20%,#a1744e 49%,#3b251c 85%,#754b30);box-shadow:0 12px 40px #0006,inset 0 0 0 1px #b17f5050}
-canvas{display:block;width:100%;height:auto;aspect-ratio:1/2;border-radius:11px;background:#52311f;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;outline:none}
-.overlay{position:absolute;inset:7px;border-radius:11px;background:#221b16d9;backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;gap:12px}.overlay[hidden]{display:none}.overlay h2{font:normal 34px Georgia,serif;margin:0}.overlay p{font-size:14px;color:#dfcdb9;line-height:1.6;max-width:255px;margin:0}.overlay .accent{color:#edc78d}.primary{background:#edc78d;color:#332318;border-color:#edc78d;font-weight:650;min-width:160px}.primary:active{background:#f6d8aa}.badge{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e4b77f}.mode[hidden]{display:none}.mode{display:flex;gap:6px;margin:6px 0}.mode button{font-size:12px}.mode [aria-pressed=true]{border-color:#edc78d;background:#65503b}
+.frame{position:relative;margin:auto;width:min(100%,calc((100svh - 212px)*.3853211));min-width:230px;border-radius:17px;padding:7px;background:linear-gradient(110deg,#8a5f3f,#3e271d 20%,#a1744e 49%,#3b251c 85%,#754b30);box-shadow:0 12px 40px #0006,inset 0 0 0 1px #b17f5050}
+canvas{display:block;width:100%;height:auto;aspect-ratio:210/545;border-radius:11px;background:#52311f;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;outline:none}
+.overlay{position:absolute;inset:7px;border-radius:11px;background:#221b16d9;backdrop-filter:blur(6px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px;gap:12px}.overlay[hidden]{display:none}.overlay h2{font:normal 28px Georgia,serif;margin:0}.overlay p{font-size:13px;color:#dfcdb9;line-height:1.6;max-width:255px;margin:0}.overlay .accent{color:#edc78d}.primary{background:#edc78d;color:#332318;border-color:#edc78d;font-weight:650;min-width:160px}.primary:active{background:#f6d8aa}.badge{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e4b77f}.mode[hidden]{display:none}.mode{display:flex;flex-direction:column;gap:5px;margin:6px 0}.mode button{font-size:12px;min-height:36px}.mode [aria-pressed=true]{border-color:#edc78d;background:#65503b}
 .hint{text-align:center;font-size:12px;color:#d1b99e;margin:10px 0 0;min-height:17px}.hint strong{font-weight:500;color:#f2d7ae}footer{margin-top:12px;font-size:10px;color:#9f8772;text-align:center}details{margin:8px auto 0;max-width:355px;font-size:12px;color:#ccb49a;line-height:1.6}summary{cursor:pointer;text-align:center;min-height:28px}details p{margin:6px 4px}a{color:#e6c390}
-@media(max-height:650px){main{padding-top:7px}header{margin-bottom:5px}h1{font-size:22px}.eyebrow{display:none}.hud{margin-bottom:5px}.value{font-size:20px}.frame{width:min(100%,calc((100svh - 170px)*.5));min-width:190px}footer{margin-top:5px}.hint{margin-top:6px}}
+@media(max-height:650px){main{padding-top:7px}header{margin-bottom:5px}h1{font-size:22px}.eyebrow{display:none}.hud{margin-bottom:5px}.value{font-size:20px}.frame{width:min(100%,calc((100svh - 170px)*.3853211));min-width:190px}footer{margin-top:5px}.hint{margin-top:6px}}
 @media(prefers-reduced-motion:reduce){.overlay{backdrop-filter:none}}
 </style>
 </head>
@@ -28,7 +28,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:1/2;border-radius:11px;
  <header><div><p class="eyebrow">A little pocket arcade</p><h1>Pocket <span>Blocks</span></h1></div><div class="tools"><button id="sound" aria-pressed="false" aria-label="Turn sound on">Sound off</button><button id="pause" disabled>Pause</button></div></header>
  <div class="hud"><div><span class="label">Score</span><span class="value" id="score">0</span></div><div class="best"><span class="label" id="bestLabel">Best · classic</span><span class="value" id="best">0</span></div></div>
  <div class="frame">
-  <canvas id="game" width="720" height="1440" aria-label="Block-clearing slingshot game. Drag the silver ball down and release to shoot. Keyboard: left and right aim, up and down adjust power, space shoots, P pauses." tabindex="0"></canvas>
+  <canvas id="game" width="720" height="1869" aria-label="Block-clearing slingshot game. Drag the silver ball down and release to shoot. Keyboard: left and right aim, up and down adjust power, space shoots, P pauses." tabindex="0"></canvas>
   <div class="overlay" id="overlay">
    <span class="badge" id="overlayBadge">Made for your fingertips</span><h2 id="overlayTitle">A satisfying little<br><span class="accent">chain reaction.</span></h2>
    <p id="overlayText">Pull the silver ball down and let go. Hit a color to clear its connected group. Keep the stacks below the top line.</p>
@@ -37,7 +37,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:1/2;border-radius:11px;
   </div>
  </div>
  <p class="hint" id="hint"><strong>Grab near the ball.</strong> Pull down, then release.</p>
- <details><summary>How to play</summary><p>Touch the ball or its halo, pull down and sideways to aim, then release. A longer pull makes a stronger shot. Touch anywhere else in the lower area to move the ball before shooting. A short tap or an upward drag cancels.</p><p>Hit any block to clear its connected color group. Bigger groups earn more. ★ clears every block of its color; ✦ clears nearby blocks. New blocks fall into the stacks. If a stack crosses the dashed top line, the game ends.</p><p>Classic adds blocks on a timer. Relaxed adds them after every three shots. Your best score is saved separately for each mode on this device when browser storage is available. Switching away automatically pauses.</p><p>Keyboard: ← → aim, ↑ ↓ change power, Space shoots, P pauses. Sound is optional. In Safari, use Share → Add to Home Screen for an app-like shortcut.</p></details>
+ <details><summary>How to play</summary><p>Touch the ball or its halo, pull down and sideways to aim, then release. A longer pull makes a stronger shot. Touch anywhere else in the lower area to move the ball before shooting. The three horizontal lines and center vertical line reproduce the original board grid at the same proportions. A short tap or an upward drag cancels.</p><p>Hit any block to clear its connected color group. Bigger groups earn more. A flashing block turns the remaining board into its displayed color when hit. A numbered bomb clears a 5 × 5 area when hit. Both special types count down from 9; if time runs out, they become ordinary blocks. New blocks fall into the stacks. If a stack crosses the dashed top line, the game ends.</p><p>Classic adds blocks on a timer. Relaxed adds them after every three shots. Your best score is saved separately for each mode on this device when browser storage is available. Switching away automatically pauses.</p><p>Keyboard: ← → aim, ↑ ↓ change power, Space shoots, P pauses. Sound is optional. In Safari, use Share → Add to Home Screen for an app-like shortcut.</p></details>
  <footer>Inspired by Ferry Halim's Bauns. Independent recreation.</footer>
 </main>
 <script>
@@ -45,7 +45,9 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:1/2;border-radius:11px;
 (() => {
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const $=id=>document.getElementById(id);
-const W=360,H=720,LEFT=24,CELL=39,COLS=8,BASE=350,TOP=38,BALL_Y=588,R=11;
+// The original board is 210 × 545. Keep its coordinate proportions unchanged.
+const SCALE=360/210,W=360,H=545*SCALE,LEFT=12,CELL=42,COLS=8,BASE=270.75*SCALE,TOP=25*SCALE,BALL_Y=435.1*SCALE,R=11;
+const GRID={horizontal:[330.35,405.35,479.35],verticalX:105,verticalFrom:330.35,verticalTo:545.35};
 const colors=['#ef6d65','#e4bd53','#75b78a','#798ddd'];
 const marks=['circle','diamond','cross','square'];
 let columns=[],ball,particles=[],floaters=[],state='ready',mode='classic',score=0,shots=0,elapsed=0,timer=0,interval=8,drag=null,trail=[],last=0,sound=false,audio=null,angle=0,power=115,cleared=false;
@@ -53,7 +55,17 @@ let best={classic:0,relaxed:0};
 try{const saved=JSON.parse(localStorage.getItem('pocket-blocks-best-v1')||'{}');for(const k of Object.keys(best))best[k]=Math.max(0,Number(saved[k])||0)}catch{}
 const rand=n=>Math.floor(Math.random()*n),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-function block(){return {color:rand(4),special:Math.random()<.045?(Math.random()<.5?'star':'burst'):null}}
+function block(allowSpecial=false){
+ const b={color:rand(4),special:null};
+ if(!allowSpecial)return b;
+ const units=columns.flat().reduce((n,t)=>n+(t.special==='flash'?2:t.special==='bomb'?1:0),0),roll=rand(50);
+ if(units<2&&roll>46)b.special='bomb';
+ else if(units===0&&roll===15)b.special='flash';
+ if(b.special){b.remaining=9;b.tick=0;b.phase=rand(4)}
+ return b;
+}
+function flashColor(b){return (Math.floor(elapsed/.16)+(b.phase||0))%4}
+
 function home(){return {x:W/2,y:BALL_Y,vx:0,vy:0,flying:false}}
 function updateHud(){ $('score').textContent=score.toLocaleString();$('best').textContent=best[mode].toLocaleString();$('bestLabel').textContent='Best · '+mode }
 function storeBest(){if(score>best[mode]){best[mode]=score;try{localStorage.setItem('pocket-blocks-best-v1',JSON.stringify(best))}catch{}}updateHud()}
@@ -64,23 +76,29 @@ function showOverlay(title,text,button,badge){$('overlayTitle').textContent=titl
 function end(){state='over';drag=null;ball.flying=false;storeBest();$('pause').disabled=true;showOverlay('One more round?',`You scored ${score.toLocaleString()} points. Clear the larger color groups to keep the stacks low.`,'Play again','The stacks reached the line');tone(160,.22)}
 function pause(){if(state!=='playing')return;state='paused';drag=null;$('pause').textContent='Resume';showOverlay('Take a breather.','Your board is waiting right here.','Keep playing','Paused')}
 function resume(){if(state!=='paused')return;state='playing';$('overlay').hidden=true;$('pause').textContent='Pause';last=performance.now()}
-function addRow(){for(const col of columns)col.push(block());if(columns.some(col=>BASE-col.length*CELL<TOP))end();else hint(mode==='classic'?'Fresh blocks. Find a big color group.':'Fresh blocks. Three more shots until the next row.')}
+function addRow(){for(const col of columns)col.push(block(true));if(columns.some(col=>BASE-col.length*CELL<TOP))end();else hint(mode==='classic'?'Fresh blocks. Find a big color group.':'Fresh blocks. Three more shots until the next row.')}
 function tone(freq,duration=.1){if(!sound)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.setValueAtTime(freq,audio.currentTime);o.frequency.exponentialRampToValueAtTime(freq*.65,audio.currentTime+duration);g.gain.setValueAtTime(.07,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration)}catch{}}
 function neighbors(c,r){return [[c-1,r],[c+1,r],[c,r-1],[c,r+1]].filter(([x,y])=>x>=0&&x<COLS&&y>=0&&y<columns[x].length)}
 function popGroup(c,r){
- const target=columns[c][r],selected=new Set(),queue=[[c,r]],key=(x,y)=>x+','+y;
- while(queue.length){const [x,y]=queue.pop(),b=columns[x]?.[y];if(!b||b.color!==target.color||selected.has(key(x,y)))continue;selected.add(key(x,y));queue.push(...neighbors(x,y))}
- // Resolve special tiles in the selection, including any specials reached by a chain.
- const expanded=new Set();let changed=true;
- while(changed){changed=false;for(const id of [...selected]){if(expanded.has(id))continue;expanded.add(id);const [x,y]=id.split(',').map(Number),b=columns[x][y];let cells=[];
-  if(b.special==='star')for(let a=0;a<COLS;a++)for(let z=0;z<columns[a].length;z++)if(columns[a][z].color===b.color)cells.push([a,z]);
-  if(b.special==='burst')for(let a=Math.max(0,x-1);a<=Math.min(COLS-1,x+1);a++)for(let z=Math.max(0,y-1);z<=Math.min(columns[a].length-1,y+1);z++)cells.push([a,z]);
-  for(const [a,z] of cells)if(!selected.has(key(a,z))){selected.add(key(a,z));changed=true}
- }}
+ const target=columns[c][r],selected=new Set(),key=(x,y)=>x+','+y;
+ let recolor=null;
+ function activate(x,y){
+  const b=columns[x]?.[y];if(!b||selected.has(key(x,y)))return;selected.add(key(x,y));
+  if(b.special==='flash'){recolor=flashColor(b);return}
+  if(b.special==='bomb'){
+   // Original bomb footprint: two cells in each direction (5 × 5).
+   for(let a=Math.max(0,x-2);a<=Math.min(COLS-1,x+2);a++)for(let z=Math.max(0,y-2);z<=Math.min(columns[a].length-1,y+2);z++)activate(a,z);
+   return;
+  }
+  for(const [a,z] of neighbors(x,y))if(columns[a][z].color===b.color&&!columns[a][z].special)activate(a,z);
+ }
+ activate(c,r);
  const count=selected.size,points=count*count*10;score+=points;storeBest();
- for(const id of selected){const [x,y]=id.split(',').map(Number),b=columns[x][y],px=LEFT+x*CELL+CELL/2,py=BASE-(y+.5)*CELL;for(let n=0;n<(reduced?0:7);n++)particles.push({x:px,y:py,vx:(Math.random()-.5)*160,vy:-60-Math.random()*100,t:.5,color:colors[b.color]})}
+ for(const id of selected){const [x,y]=id.split(',').map(Number),b=columns[x][y],px=LEFT+x*CELL+CELL/2,py=BASE-(y+.5)*CELL;for(let n=0;n<(reduced?0:7);n++)particles.push({x:px,y:py,vx:(Math.random()-.5)*160,vy:-60-Math.random()*100,t:.5,color:colors[b.special==='flash'?flashColor(b):b.color]})}
  for(let x=0;x<COLS;x++)columns[x]=columns[x].filter((_,y)=>!selected.has(key(x,y)));
- floaters.push({x:clamp(ball.x,60,W-60),y:ball.y,text:'+'+points,t:1});tone(320+Math.min(count,15)*35,.13);hint(count>3?`${count} blocks! +${points.toLocaleString()} points.`:'Aim for connected colors to clear bigger groups.');
+ if(recolor!==null){for(const col of columns)for(const b of col){b.color=recolor;b.special=null;delete b.remaining;delete b.tick}hint('One color across the whole board!')}
+ else hint(target.special==='bomb'?'Bomb! A five-by-five blast.':count>3?`${count} blocks! +${points.toLocaleString()} points.`:'Aim for connected colors to clear bigger groups.');
+ floaters.push({x:clamp(ball.x,60,W-60),y:ball.y,text:'+'+points,t:1});tone(320+Math.min(count,15)*35,.13);
  if(columns.every(col=>col.length===0)){score+=1000;storeBest();floaters.push({x:W/2,y:230,text:'CLEAR! +1,000',t:1.6});cleared=true}
 }
 function launch(dx,dy){const pull=Math.hypot(dx,dy);if(dy<10||pull<16){hint('Pull down from the ball, then release.');return false}const length=Math.min(150,pull),speed=270+length*3.4;ball.vx=-dx/pull*speed;ball.vy=-dy/pull*speed;ball.flying=true;trail=[];tone(240,.06);return true}
@@ -88,7 +106,7 @@ function finishShot(){ball.flying=false;ball.y=BALL_Y;ball.x=clamp(ball.x,35,W-3
 function point(e){const b=canvas.getBoundingClientRect();return {x:(e.clientX-b.left)*W/b.width,y:(e.clientY-b.top)*H/b.height}}
 canvas.addEventListener('pointerdown',e=>{
  if(state!=='playing'||ball.flying||drag||e.isPrimary===false)return;e.preventDefault();const p=point(e),b=canvas.getBoundingClientRect(),grabRadius=Math.max(45,40*W/b.width);
- if(Math.hypot(p.x-ball.x,p.y-ball.y)>grabRadius){if(p.y<410)return;ball.x=clamp(p.x,35,W-35)}
+ if(Math.hypot(p.x-ball.x,p.y-ball.y)>grabRadius){if(p.y<298*SCALE)return;ball.x=clamp(p.x,35,W-35)}
  drag={id:e.pointerId,startX:p.x,startY:p.y,x:p.x,y:p.y};canvas.setPointerCapture(e.pointerId);tone(600,.025);
 });
 canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;e.preventDefault();const p=point(e);drag.x=p.x;drag.y=p.y});
@@ -100,7 +118,11 @@ $('sound').addEventListener('click',()=>{sound=!sound;$('sound').textContent=sou
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{mode=btn.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));updateHud()}));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});window.addEventListener('blur',()=>pause());
 function update(dt){
- elapsed+=dt;if(mode==='classic'){interval=Math.max(3.5,8-elapsed/100);timer+=dt;if(timer>=interval){timer=0;addRow();if(state!=='playing')return}}
+ elapsed+=dt;
+ // At 25 fps the original uses two timeline frames for each of 25 delay steps.
+ // Each numeral therefore lasts two seconds; zero restores an ordinary block.
+ for(const col of columns)for(const b of col)if(b.special){b.tick+=dt;while(b.tick>=2&&b.special){b.tick-=2;b.remaining--;if(b.remaining<=0){b.special=null;b.color=rand(4);delete b.remaining;delete b.tick}}}
+ if(mode==='classic'){interval=Math.max(3.5,8-elapsed/100);timer+=dt;if(timer>=interval){timer=0;addRow();if(state!=='playing')return}}
  if(ball.flying){
   const steps=Math.max(1,Math.ceil(Math.hypot(ball.vx,ball.vy)*dt/5)),step=dt/steps;
   for(let n=0;n<steps&&ball.flying;n++){
@@ -132,14 +154,20 @@ function draw(){
  round(24,15,W-48,5,2,'#221812');round(24,15,(W-48)*(1-prog),5,2,prog>.75?'#ee9d75':'#e5bd7c');
  ctx.font='8px -apple-system,sans-serif';ctx.fillStyle='#efceb1aa';ctx.textAlign='center';ctx.fillText(mode==='classic'?'NEXT ROW':`${3-shots%3} SHOTS TO NEXT ROW`,W/2,30);
  for(let c=0;c<COLS;c++)for(let r=0;r<columns[c].length;r++){
-  const b=columns[c][r],x=LEFT+c*CELL+2,y=BASE-(r+1)*CELL+2;
-  round(x,y+3,35,35,7,'#100c0990');const g=ctx.createLinearGradient(x,y,x+25,y+35);g.addColorStop(0,colors[b.color]);g.addColorStop(1,colors[b.color]+'bb');round(x,y,35,35,7,g);
+  const b=columns[c][r],x=LEFT+c*CELL+3,y=BASE-(r+1)*CELL+3,displayColor=b.special==='flash'?flashColor(b):b.color;
+  round(x,y+3,35,35,7,'#100c0990');const g=ctx.createLinearGradient(x,y,x+25,y+35);g.addColorStop(0,colors[displayColor]);g.addColorStop(1,colors[displayColor]+'bb');round(x,y,35,35,7,g);
   round(x+3,y+2,29,12,5,'#fff2');ctx.fillStyle='#fff9';ctx.beginPath();ctx.ellipse(x+8,y+7,2,2.5,.5,0,7);ctx.fill();
-  if(b.special){ctx.font='bold 20px Georgia';ctx.textAlign='center';ctx.fillStyle='#fff7d4';ctx.fillText(b.special==='star'?'★':'✦',x+17.5,y+24)}else symbol(marks[b.color],x+18,y+20,'#271b1755');
+  if(b.special){
+   ctx.font='bold 24px Georgia';ctx.textAlign='center';ctx.fillStyle='#fffbe6';ctx.shadowColor='#15100a';ctx.shadowBlur=3;ctx.fillText(String(b.remaining),x+17.5,y+26);ctx.shadowBlur=0;
+   if(b.special==='flash'){ctx.strokeStyle='#fff9';ctx.lineWidth=1.5;ctx.strokeRect(x+1.5,y+1.5,32,32)}
+  }else symbol(marks[b.color],x+18,y+20,'#271b1755');
  }
  ctx.fillStyle='#e6b67744';ctx.fillRect(16,BASE+8,W-32,2);
- for(const y of [435,510,660]){ctx.strokeStyle='#dfad6124';ctx.beginPath();ctx.moveTo(16,y);ctx.lineTo(W-16,y);ctx.stroke()}
- ctx.fillStyle='#f8d9a530';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText('P U L L  B A C K  ·  L E T  G O',W/2,695);
+ // Measured from the original vector grid, in the original 210 × 545 coordinates.
+ ctx.save();ctx.fillStyle='rgba(255,255,0,0.44921875)';ctx.strokeStyle='rgba(0,0,0,0.44921875)';ctx.lineWidth=.05*SCALE;
+ const gridOutline=[[210,329.85],[210,330.85],[105.5,330.85],[105.5,404.85],[210,404.85],[210,405.85],[105.5,405.85],[105.5,478.85],[210,478.85],[210,479.85],[105.5,479.85],[105.5,545.35],[104.5,545.35],[104.5,479.85],[0,479.85],[0,478.85],[104.5,478.85],[104.5,405.85],[0,405.85],[0,404.85],[104.5,404.85],[104.5,330.85],[0,330.85],[0,329.85]];
+ ctx.beginPath();gridOutline.forEach(([x,y],i)=>i?ctx.lineTo(x*SCALE,y*SCALE):ctx.moveTo(x*SCALE,y*SCALE));ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ ctx.fillStyle='#f8d9a530';ctx.font='9px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText('P U L L  B A C K  ·  L E T  G O',W/2,H-18);
  if(state==='playing'&&!ball.flying){
   ctx.beginPath();ctx.arc(ball.x,ball.y,42,0,Math.PI*2);ctx.strokeStyle=drag?'#f6dfb955':'#f6dfb92a';ctx.lineWidth=1;ctx.stroke();
   if(drag){const dx=drag.x-drag.startX,dy=drag.y-drag.startY,len=Math.hypot(dx,dy);if(dy>8&&len>15){const nx=-dx/len,ny=-dy/len;ctx.save();ctx.setLineDash([3,9]);ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x+nx*160,ball.y+ny*160);ctx.strokeStyle='#f5dba7bb';ctx.lineWidth=2;ctx.stroke();ctx.restore();const pull=Math.min(135,len);ctx.beginPath();ctx.moveTo(ball.x,ball.y);ctx.lineTo(ball.x-nx*pull,ball.y-ny*pull);ctx.strokeStyle='#edc78d77';ctx.lineWidth=3;ctx.stroke();ctx.beginPath();ctx.arc(ball.x-nx*pull,ball.y-ny*pull,6,0,7);ctx.fillStyle='#edc78d';ctx.fill()}}
@@ -152,7 +180,7 @@ function draw(){
  for(const f of floaters){ctx.globalAlpha=clamp(f.t*2,0,1);ctx.font='bold 20px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillStyle='#fff0bd';ctx.shadowColor='#20140e';ctx.shadowBlur=4;ctx.fillText(f.text,f.x,f.y);ctx.shadowBlur=0}ctx.globalAlpha=1;
 }
 function frame(now){const dt=Math.min(.04,(now-last)/1000||0);last=now;if(state==='playing')update(dt);draw();requestAnimationFrame(frame)}
-const woodCanvas=document.createElement('canvas');woodCanvas.width=720;woodCanvas.height=1440;const woodCtx=woodCanvas.getContext('2d');woodCtx.setTransform(2,0,0,2,0,0);wood(woodCtx);
+const woodCanvas=document.createElement('canvas');woodCanvas.width=720;woodCanvas.height=1869;const woodCtx=woodCanvas.getContext('2d');woodCtx.setTransform(2,0,0,1869/H,0,0);wood(woodCtx);
 seed();updateHud();requestAnimationFrame(frame);
 })();
 </script>
